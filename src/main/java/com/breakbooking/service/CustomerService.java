@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 import javax.persistence.EntityExistsException;
-import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,7 +43,8 @@ public class CustomerService {
 	
 	
 	public Customer findCustomerById(Long id) {
-		return customerRepo.findAllById(id).orElseThrow(()->new ResourceNotFoundException("Customer by id "+ id +" was not found"));
+	
+		return customerRepo.findById(id).orElseThrow(()->new ResourceNotFoundException("Customer by id "+ id +" was not found"));
 	}
 	
 	
@@ -56,10 +56,15 @@ public class CustomerService {
 		if(customer.getId()!=null && customerRepo.existsById(customer.getId()))
 			throw new EntityExistsException("There is an existing customer with id "+customer.getId()+" in the database ");
 		
-		if(customerRepo.findCustomerByEmail(customer.getEmail()).isPresent()) {
+	/*	if(customerRepo.findCustomerByEmail(customer.getEmail()).isPresent()) {
 			throw new DuplicateResourceException("Customer with email id "+customer.getEmail()+"already exists");
 		}
-	
+	*/
+		if(customerRepo.selectExistsEmail(customer.getEmail())) {
+			throw new DuplicateResourceException("Customer with email id "+customer.getEmail()+"already exists");
+		}
+		
+		
 		if(customer.getDob().isAfter(LocalDate.now())) 
 			throw new InvalidDateException("Please enter a valid date of birth");
 		
@@ -70,38 +75,43 @@ public class CustomerService {
 		
 	/*UPDATE*/
 
-	
-	@Transactional
-	public Customer updateCustomer(Long id, Customer customer) {	
+
+	public Customer updateCustomer(Long id, Customer newCustomer) {	
 		
 		Customer oldCustomer = customerRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException(
 				"Customer with id "+id
 				+ " does not exist"));
 		
-		String email=customer.getEmail();
-		
+		String email=newCustomer.getEmail();
+	
 		if(email!=null && email.length()>0 && !Objects.equals(oldCustomer.getEmail(),email ))
 		{
-			if(customerRepo.findCustomerByEmail(email).isPresent()) {
+		/*	if(customerRepo.findCustomerByEmail(email).isPresent()) {
 				throw new DuplicateResourceException("Customer with email id "+customer.getEmail()+"already exists");
+			}
+			
+			*/
+			
+			if(customerRepo.selectExistsEmail(newCustomer.getEmail())) {
+				throw new DuplicateResourceException("Customer with email id "+newCustomer.getEmail()+"already exists");
 			}
 		}
 		
-		if(customer.getDob().isAfter(LocalDate.now())) 
+		if(newCustomer.getDob().isAfter(LocalDate.now())) 
 			throw new InvalidDateException("Please enter a valid date of birth");
 		
 		
-		customer.setId(id);
-		oldCustomer.setName(customer.getName());
-		oldCustomer.setEmail(customer.getEmail());
-		oldCustomer.setJobTitle(customer.getJobTitle());
-		oldCustomer.setPhone(customer.getPhone());
-		oldCustomer.setDob(customer.getDob());
-		oldCustomer.setDescription(customer.getDescription());
-		oldCustomer.setCustomerCode(customer.getCustomerCode());
+		newCustomer.setId(id);
+		oldCustomer.setName(newCustomer.getName());
+		oldCustomer.setEmail(newCustomer.getEmail());
+		oldCustomer.setJobTitle(newCustomer.getJobTitle());
+		oldCustomer.setPhone(newCustomer.getPhone());
+		oldCustomer.setDob(newCustomer.getDob());
+		oldCustomer.setDescription(newCustomer.getDescription());
+		oldCustomer.setCustomerCode(newCustomer.getCustomerCode());
 	
-		customerRepo.save(customer);
-		return customer;
+		customerRepo.save(newCustomer);
+		return newCustomer;
 	
 	
 	}	
@@ -110,13 +120,15 @@ public class CustomerService {
 	/* DELETE */
 	
 	public Map<String, Boolean> deleteCustomer(Long id) {
-
+		
 		if(!customerRepo.existsById(id)) {
 			throw new ResourceNotFoundException("Customer with id "+id+" does not exist");
 		}
-		customerRepo.deleteById(id);;;
+	
+		customerRepo.deleteById(id);
 		Map<String, Boolean> response =new HashMap<>();
 		response.put("Deleted", Boolean.TRUE);
+	
 		return response;
 		
 	}

@@ -1,4 +1,4 @@
-package com.breakbooking;
+package com.breakbooking.controller;
 
 import java.util.List;
 
@@ -7,6 +7,7 @@ import javax.persistence.EntityExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,13 +25,13 @@ import com.breakbooking.model.Customer;
 import com.breakbooking.service.CustomerService;
 
 @RestController
-@RequestMapping("api/v1/customer")
-public class CustomereResource {
+@RequestMapping("api/v1/customers")
+public class CustomerController{
 	
 	@Autowired
 	private final CustomerService customerService;
 
-	public CustomereResource(CustomerService customerService) {
+	public CustomerController(CustomerService customerService) {
 		this.customerService = customerService;
 	}
 	
